@@ -62,7 +62,7 @@ python manage.py runserver
 ## 📊 Running the Research Study
 To replicate the Hallucination Analysis I conducted (50-problem batch), execute the automated runner:
 ```
-python batch_runner.py
+python automator.py
 ```
 Once completed, visit the /analytics/ endpoint in your browser to view the distribution of verified vs. hallucinated solutions.
 
