@@ -1,0 +1,170 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-4xl mx-auto py-12 px-6">
+  <div
+    class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-8 overflow-hidden"
+  >
+    <h2
+      class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 text-orange-500"
+    >
+      Input Problem
+    </h2>
+    <div
+      id="query-text"
+      class="text-xl text-slate-800 dark:text-white font-serif overflow-x-auto whitespace-normal pb-2"
+    >
+      \( {{ query }} \)
+    </div>
+  </div>
+
+  <div
+    class="bg-white dark:bg-slate-800 p-10 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 transition-theme"
+  >
+    <div class="flex justify-between items-center mb-6">
+      <span
+        class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest {% if final.final_status == 'VERIFIED' %} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 {% elif 'PASS' in final.final_status %} bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 {% else %} bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 {% endif %}"
+      >
+        {{ final.final_status }}
+      </span>
+      <span class="text-slate-400 text-xs font-mono"
+        >Final Resolution | Attempt {{ final.attempt }}</span
+      >
+    </div>
+
+    <article
+      id="main-solution"
+      class="prose dark:prose-invert max-w-none mb-10"
+    >
+      {{ final.proposed_solution|safe|linebreaksbr }}
+    </article>
+  </div>
+
+  <div class="mt-12 space-y-6">
+    <h3
+      class="text-center text-slate-400 text-xs font-black uppercase tracking-[0.4em]"
+    >
+      Formal Audit Trail
+    </h3>
+
+    {% for step in history %}
+    <details
+      class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+      {%
+      if
+      forloop.last
+      %}open{%
+      endif
+      %}
+    >
+      <summary
+        class="px-6 py-4 flex justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"
+      >
+        <span class="font-bold text-slate-600 dark:text-slate-300"
+          >Verification Attempt #{{ step.attempt }}</span
+        >
+        <div class="flex gap-2">
+          <span
+            class="px-2 py-0.5 rounded text-[10px] font-bold {% if step.symbolic_passed %} bg-green-100 text-green-700 {% else %} bg-rose-100 text-rose-700 {% endif %}"
+          >
+            SYM: {% if step.symbolic_passed %}PASS{% else %}FAIL{% endif %}
+          </span>
+          <span
+            class="px-2 py-0.5 rounded text-[10px] font-bold {% if step.semantic_status %} bg-green-100 text-green-700 {% else %} bg-rose-100 text-rose-700 {% endif %}"
+          >
+            SEM: {% if step.semantic_status %}PASS{% else %}FAIL{% endif %}
+          </span>
+        </div>
+      </summary>
+
+      <div
+        class="p-6 border-t border-slate-100 dark:border-slate-700 space-y-6"
+      >
+        <div>
+          <h4
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
+          >
+            LLM Feedback
+          </h4>
+          <div
+            class="semantic-content p-3 bg-slate-50 dark:bg-slate-900/10 border-l-4 border-slate-400 text-sm text-slate-800 dark:text-slate-300 italic"
+          >
+            {{ step.LLM_feedback }}
+          </div>
+          <h4
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
+          >
+            Semantic Auditor (LLM)
+          </h4>
+          {% if step.semantic_status %}
+          <div
+            class="semantic-content p-3 bg-green-50 dark:bg-green-900/10 border-l-4 border-green-500 text-sm text-green-800 dark:text-green-300 italic"
+          >
+            <strong>Affirmation:</strong> {{ step.affirmation }}
+          </div>
+          {% else %}
+          <div
+            class="semantic-content p-3 bg-rose-50 dark:bg-rose-900/10 border-l-4 border-rose-500 text-sm text-rose-800 dark:text-rose-300"
+          >
+            <strong>Corrections:</strong> {{ step.corrections }}
+          </div>
+          {% endif %}
+        </div>
+
+        <div>
+          <h4
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
+          >
+            Symbolic Verification (SymPy)
+          </h4>
+          <div
+            class="bg-slate-900 p-5 rounded-xl font-mono text-xs shadow-inner"
+          >
+            <pre class="text-blue-400 mb-3">{{ step.code }}</pre>
+            <div
+              class="mt-2 pt-2 border-t border-slate-800 flex justify-between"
+            >
+              <span class="text-slate-500">>>> exec_output:</span>
+              <span
+                class="{% if step.symbolic_passed %}text-green-400{% else %}text-rose-400{% endif %} font-bold"
+              >
+                {{ step.error_msg }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+
+  <div class="py-12 text-center">
+    <a
+      href="{% url 'index' %}"
+      class="inline-flex items-center gap-2 text-orange-500 font-bold hover:gap-3 transition-all"
+    >
+      <span>←</span> Solve Another Engineering Problem
+    </a>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function normalizeMath(selector) {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach((el) => {
+        let text = el.innerHTML;
+        if (text.includes("$")) {
+          text = text.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, "\\[ $1 \\]");
+          text = text.replace(/\$(?!\$)\s*([^$\n]+?)\s*\$/g, "\\( $1 \\)");
+        }
+        el.innerHTML = text;
+      });
+    }
+    normalizeMath("#query-text");
+    normalizeMath("#main-solution");
+    normalizeMath(".semantic-content");
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise();
+    }
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %} {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="max-w-6xl mx-auto py-12 px-6 space-y-12">
+  <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+    <h1
+      class="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter"
+    >
+      Neuro-Symbolic Analytics
+    </h1>
+    <a
+      href="{% url 'index' %}"
+      class="inline-flex items-center px-6 py-3 border border-slate-200 dark:border-slate-700 text-sm font-bold rounded-2xl text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 transition-all shadow-sm"
+    >
+      <svg
+        class="w-4 h-4 mr-2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7m-7 7h18"
+        />
+      </svg>
+      Back to Solver
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div
+      class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+    >
+      <p
+        class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1"
+      >
+        Total Problems Run
+      </p>
+      <h2 class="text-5xl font-black text-orange-500">{{ total_problems }}</h2>
+    </div>
+    <div
+      class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+    >
+      <p
+        class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1"
+      >
+        Formal Verification Rate
+      </p>
+      <h2 class="text-5xl font-black text-green-500">
+        {{ verified_rate|floatformat:1 }}%
+      </h2>
+    </div>
+    <div
+      class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm"
+    >
+      <p
+        class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1"
+      >
+        Stochastic-Symbolic Gap
+      </p>
+      <p class="text-slate-500 text-sm leading-tight italic">
+        Verified by SymPy Symbolic Auditor layer.
+      </p>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <h2
+      class="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight"
+    >
+      Verification State Distribution
+    </h2>
+    <div
+      class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-xl h-[500px]"
+    >
+      <canvas id="studyChart"></canvas>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <h2
+      class="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight"
+    >
+      Category Breakdown
+    </h2>
+    <div
+      class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xl"
+    >
+      <table class="w-full text-left">
+        <thead>
+          <tr class="bg-slate-50 dark:bg-slate-900/50">
+            <th
+              class="p-6 text-xs font-black uppercase text-slate-400 tracking-widest"
+            >
+              Category
+            </th>
+            <th
+              class="p-6 text-xs font-black uppercase text-slate-400 tracking-widest text-center"
+            >
+              Sample Size
+            </th>
+            <th
+              class="p-6 text-xs font-black uppercase text-slate-400 tracking-widest text-center"
+            >
+              Avg. Retries
+            </th>
+            <th
+              class="p-6 text-xs font-black uppercase text-slate-400 tracking-widest"
+            >
+              Hallucination Rate
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+          {% for stat in category_stats %}
+          <tr
+            class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors"
+          >
+            <td class="p-6 font-bold text-slate-700 dark:text-slate-200">
+              {{ stat.category }}
+            </td>
+            <td class="p-6 text-center text-slate-500 font-mono">
+              {{ stat.total }}
+            </td>
+            <td class="p-6 text-center text-slate-500 font-mono">
+              {{ stat.avg_attempts|floatformat:1 }}
+            </td>
+            <td class="p-6">
+              <div class="flex items-center gap-4">
+                <div
+                  class="flex-1 h-2 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden"
+                >
+                  <div
+                    class="h-full bg-rose-500"
+                    style="width: {{ stat.hallucination_rate }}%"
+                  ></div>
+                </div>
+                <span class="font-mono font-bold text-rose-500"
+                  >{{ stat.hallucination_rate|floatformat:1 }}%</span
+                >
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="p-12 text-center text-slate-400 italic">
+              No data available. Run the batch solver to populate the study.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div
+    class="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700"
+  >
+    <h3 class="font-bold text-slate-700 dark:text-slate-200 mb-2">
+      Study Definitions
+    </h3>
+    <ul class="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+      <li>
+        <strong>Verified:</strong> Both agents confirmed the solution correctly.
+      </li>
+      <li>
+        <strong>Symbolic Only:</strong> Formal logic corrected LLM skepticism.
+      </li>
+      <li>
+        <strong>Semantic Only:</strong> Identifies the Hallucination Rate (LLM
+        approved an incorrect solution).
+      </li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const labels = {{ chart_categories|safe }};
+  const ctx = document.getElementById('studyChart').getContext('2d');
+
+  new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: labels,
+          datasets: [
+              { label: 'Verified', data: {{ v_data|safe }}, backgroundColor: '#22c55e' },
+              { label: 'Symbolic Only', data: {{ sym_data|safe }}, backgroundColor: '#3b82f6' },
+              { label: 'Semantic Only (Hallucinations)', data: {{ sem_data|safe }}, backgroundColor: '#f59e0b' },
+              { label: 'Both Failed', data: {{ fail_data|safe }}, backgroundColor: '#f43f5e' }
+          ]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  max: 100,
+                  title: { display: true, text: 'Verification Rate (%)', font: { weight: 'bold' } },
+                  ticks: { callback: (v) => v + '%' }
+              }
+          },
+          plugins: {
+              legend: { position: 'bottom', labels: { font: { weight: 'bold' }, padding: 20 } },
+              tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}%` } }
+          }
+      }
+  });
+</script>
+{% endblock %}

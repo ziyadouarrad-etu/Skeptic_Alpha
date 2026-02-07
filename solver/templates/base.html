@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skeptical Alpha | Engineering Intelligence</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/mathlive/dist/mathlive-static.css"
+    />
+    <script src="https://unpkg.com/mathlive"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+      };
+    </script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+
+    <script>
+      tailwind.config = { darkMode: "class" };
+    </script>
+
+    <style>
+      /* Custom scrollbar for long math problems */
+      #query-text::-webkit-scrollbar {
+        height: 10px;
+      }
+      #query-text::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #query-text::-webkit-scrollbar-thumb {
+        background: #f97316; /* Matches your orange-500 */
+        border-radius: 10px;
+      }
+
+      /* Force MathJax to handle container width */
+      .mjx-container {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+      }
+      math-field {
+        width: 100%;
+        font-size: 1.8rem;
+        border: none;
+        outline: none;
+        padding: 1rem;
+        background: transparent;
+        --caret-color: #f97316;
+      }
+      .dark math-field {
+        color: white;
+      }
+      .transition-theme {
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 dark:bg-slate-900 min-h-screen transition-theme">
+    <div class="fixed top-6 right-6 z-50">
+      <button
+        id="theme-toggle"
+        class="p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700"
+      >
+        <span id="theme-toggle-icon" class="text-xl">🌙</span>
+      </button>
+    </div>
+
+    {% block content %} {% endblock %}
+
+    <script>
+      const themeToggle = document.getElementById("theme-toggle");
+      const themeIcon = document.getElementById("theme-toggle-icon");
+      let isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+        themeIcon.innerText = "☀️";
+      }
+
+      themeToggle.onclick = () => {
+        document.documentElement.classList.toggle("dark");
+        isDark = !isDark;
+        themeIcon.innerText = isDark ? "☀️" : "🌙";
+      };
+    </script>
+  </body>
+</html>
